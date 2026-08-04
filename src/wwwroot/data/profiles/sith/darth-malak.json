@@ -1,0 +1,41 @@
+{
+  "overview": "Darth Malak was Revan's Sith apprentice who usurped the Star Forge empire and waged the Jedi Civil War with brutal efficiency. His disfigured jaw, Force Lightning, and orbital bombardment of Taris made him one of the Old Republic's most feared Dark Lords.",
+  "history": "Once Revan's closest friend and fellow Revanchist, Malak embraced the dark side during the Mandalorian Wars and helped build a Sith fleet around the Star Forge. When he turned on Revan above Malachor and Rakata Prime, Malak seized the empire and hunted the mind-wiped Jedi across Taris, Dantooine, and the Rim.\n\nMalak's cruelty peaked with Taris's destruction and Bastila Shan's torture, yet his reliance on the Star Forge's infinite droid armies masked strategic rigidity. Revan's return culminated in a final duel aboard the factory station where Malak fell, ending the Jedi Civil War.",
+  "significance": "Malak illustrates how apprentice ambition destroys Sith partnerships outside Bane's Rule of Two—yet produces the same betrayal dynamic.\n\nTaris's bombardment remains a benchmark for Sith atrocities before the Death Star era.\n\nMalak's reign bridges Mandalorian Wars veterans to the quieter Ruusan Reformations.",
+  "notableEvents": [
+    "Turned on Darth Revan and seized the Sith Empire",
+    "Ordered the orbital bombardment of Taris",
+    "Captured Bastila Shan and corrupted her toward the dark side",
+    "Commanded the Star Forge against the Republic at Rakata Prime",
+    "Was defeated in a final duel with the redeemed Revan"
+  ],
+  "affiliations": [
+    "Sith Empire (Old Republic era)",
+    "Star Forge command",
+    "Revanchist veterans (former)"
+  ],
+  "timeline": [
+    {
+      "era": "Old Republic",
+      "event": "Fell to the dark side during the Mandalorian Wars"
+    },
+    {
+      "era": "Old Republic",
+      "event": "Betrayed Revan and claimed the Sith throne"
+    },
+    {
+      "era": "Old Republic",
+      "event": "Destroyed Taris and hunted the Republic fleet"
+    },
+    {
+      "era": "Old Republic",
+      "event": "Died aboard the Star Forge against Revan"
+    }
+  ],
+  "gallery": [
+    {
+      "path": "/images/sith/darth-malak-scene.webp",
+      "caption": "Cinematic illustration — Darth Malak"
+    }
+  ]
+}

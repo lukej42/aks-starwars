@@ -1,0 +1,1442 @@
+﻿@using StarWars.Data
+@using StarWars.Models
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Star Wars</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable">
+    <nav class="nav flex-column">
+        <div class="nav-section nav-section-top">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="galaxy-map">
+                    <span class="bi bi-galaxy-map-nav-menu" aria-hidden="true"></span> Galaxy Map
+                </NavLink>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileTimelines">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsTimelineRoute ? "active" : null)"
+                        @onclick="ToggleMobileTimelines">
+                    <span class="bi bi-timelines-nav-menu" aria-hidden="true"></span> Timelines
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileTimelinesOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel">
+                        <NavLink class="nav-link nav-flyout-link nav-timeline-link nav-full-timeline-link" href="timelines" @onclick="CloseMobileNav">
+                            <span class="bi bi-full-timeline-nav-menu" aria-hidden="true"></span>
+                            Full Timeline
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var era in TimelineData.Eras)
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-timeline-link" href="@era.Route" @onclick="CloseMobileNav">
+                                <span class="nav-timeline-dot" style="background-color: @era.Color" aria-hidden="true"></span>
+                                @era.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileChronicles">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsChroniclesRoute ? "active" : null)"
+                        @onclick="ToggleMobileChronicles">
+                    <span class="bi bi-chronicles-nav-menu" aria-hidden="true"></span> Chronicles
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileChroniclesOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-chronicles">
+                        <NavLink class="nav-link nav-flyout-link nav-chronicles-link nav-galactic-history-link" href="@ChroniclesData.GalacticHistoryRoute" @onclick="CloseMobileNav">
+                            <span class="bi bi-galactic-history-nav-menu" aria-hidden="true"></span>
+                            Galactic History
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var entry in ChroniclesData.Entries)
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-chronicles-link" href="@entry.Route" @onclick="CloseMobileNav">
+                                <span class="nav-chronicles-dot" style="background-color: @entry.Color" aria-hidden="true"></span>
+                                @entry.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileFactions">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsFactionRoute ? "active" : null)"
+                        @onclick="ToggleMobileFactions">
+                    <span class="bi bi-factions-nav-menu" aria-hidden="true"></span> Factions
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileFactionsOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel">
+                        <NavLink class="nav-link nav-flyout-link nav-faction-link nav-all-factions-link" href="all-factions" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-factions-nav-menu" aria-hidden="true"></span>
+                            All Factions
+                        </NavLink>
+                        @foreach (var faction in FactionData.Factions)
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-faction-link" href="@faction.Route" @onclick="CloseMobileNav">
+                                <span class="nav-faction-dot" style="background-color: @faction.Color" aria-hidden="true"></span>
+                                @faction.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileCharacters">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsCharacterDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobileCharacters">
+                    <span class="bi bi-characters-directory-nav-menu" aria-hidden="true"></span> Characters Directory
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileCharactersOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll">
+                        <NavLink class="nav-link nav-flyout-link nav-character-link nav-all-characters-link" href="all-characters" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-characters-nav-menu" aria-hidden="true"></span>
+                            All Characters
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var character in CharacterData.Characters.OrderBy(character => character.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-character-link" href="@character.Route" @onclick="CloseMobileNav">
+                                <span class="nav-character-dot" style="background-color: @character.Color" aria-hidden="true"></span>
+                                @character.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileJedi">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsJediDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobileJedi">
+                    <span class="bi bi-jedi-directory-nav-menu" aria-hidden="true"></span> Jedi Directory
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileJediOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll">
+                        <NavLink class="nav-link nav-flyout-link nav-jedi-link nav-all-jedi-link" href="all-jedi" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-jedi-nav-menu" aria-hidden="true"></span>
+                            All Jedi
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var jedi in JediData.Members.OrderBy(jedi => jedi.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-jedi-link" href="@jedi.Route" @onclick="CloseMobileNav">
+                                <span class="nav-jedi-dot" style="background-color: @jedi.Color" aria-hidden="true"></span>
+                                @jedi.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileSith">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsSithDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobileSith">
+                    <span class="bi bi-sith-directory-nav-menu" aria-hidden="true"></span> Sith Directory
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileSithOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll">
+                        <NavLink class="nav-link nav-flyout-link nav-sith-link nav-all-sith-link" href="all-sith" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-sith-nav-menu" aria-hidden="true"></span>
+                            All Sith
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var sith in SithData.Members.OrderBy(sith => sith.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-sith-link" href="@sith.Route" @onclick="CloseMobileNav">
+                                <span class="nav-sith-dot" style="background-color: @sith.Color" aria-hidden="true"></span>
+                                @sith.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileMilitaryUnits">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsMilitaryUnitsRoute ? "active" : null)"
+                        @onclick="ToggleMobileMilitaryUnits">
+                    <span class="bi bi-military-units-nav-menu" aria-hidden="true"></span> Military Units
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileMilitaryUnitsOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-military-units">
+                        <NavLink class="nav-link nav-flyout-link nav-military-unit-link nav-all-military-units-link" href="all-military-units" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-factions-nav-menu" aria-hidden="true"></span>
+                            All Factions
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var faction in MilitaryUnitData.Factions.OrderBy(faction => faction.Name))
+                        {
+                            <div class="nav-subflyout"
+                                 @onclick:stopPropagation="true"
+                                 @onmouseleave="() => CloseMilitaryFaction(faction.Slug)">
+                                <button type="button"
+                                        class="nav-link nav-flyout-trigger nav-flyout-link nav-subflyout-trigger @(IsMilitaryFactionRoute(faction.Slug) ? "active" : null)"
+                                        @onclick="() => ToggleMilitaryFaction(faction.Slug)">
+                                    <span class="nav-military-unit-dot" style="background-color: @faction.Color" aria-hidden="true"></span>
+                                    @faction.Name
+                                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                                </button>
+                                <div class="nav-subflyout-menu @(openMilitaryFactionSlug == faction.Slug ? "is-open" : null)">
+                                    <div class="nav-flyout-panel nav-flyout-panel-military-units">
+                                        <NavLink class="nav-link nav-flyout-link nav-military-unit-link" href="@faction.Route" @onclick="CloseMobileNav">
+                                            All Military Units
+                                        </NavLink>
+                                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                                        <div class="nav-subflyout"
+                                             @onclick:stopPropagation="true"
+                                             @onmouseleave="() => CloseMilitaryBranch(faction.Slug, MilitaryUnitBranch.Army)">
+                                            <button type="button"
+                                                    class="nav-link nav-flyout-trigger nav-flyout-link nav-subflyout-trigger @(IsMilitaryBranchRoute(faction.Slug, MilitaryUnitBranch.Army) ? "active" : null)"
+                                                    @onclick="() => ToggleMilitaryBranch(faction.Slug, MilitaryUnitBranch.Army)">
+                                                Army
+                                                <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                                            </button>
+                                            <div class="nav-subflyout-menu @(openMilitaryBranchKey == GetMilitaryBranchKey(faction.Slug, MilitaryUnitBranch.Army) ? "is-open" : null)">
+                                                <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-military-units">
+                                                    <NavLink class="nav-link nav-flyout-link nav-military-unit-link" href="@faction.ArmyRoute" @onclick="CloseMobileNav">
+                                                        All Army Units
+                                                    </NavLink>
+                                                    <div class="nav-flyout-divider" aria-hidden="true"></div>
+                                                    @foreach (var unit in MilitaryUnitData.GetArmyUnits(faction.Slug))
+                                                    {
+                                                        <NavLink class="nav-link nav-flyout-link nav-military-unit-link" href="@unit.Route" @onclick="CloseMobileNav">
+                                                            <span class="nav-military-unit-dot" style="background-color: @unit.Color" aria-hidden="true"></span>
+                                                            @unit.Name
+                                                        </NavLink>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="nav-subflyout"
+                                             @onclick:stopPropagation="true"
+                                             @onmouseleave="() => CloseMilitaryBranch(faction.Slug, MilitaryUnitBranch.Navy)">
+                                            <button type="button"
+                                                    class="nav-link nav-flyout-trigger nav-flyout-link nav-subflyout-trigger @(IsMilitaryBranchRoute(faction.Slug, MilitaryUnitBranch.Navy) ? "active" : null)"
+                                                    @onclick="() => ToggleMilitaryBranch(faction.Slug, MilitaryUnitBranch.Navy)">
+                                                Navy
+                                                <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                                            </button>
+                                            <div class="nav-subflyout-menu @(openMilitaryBranchKey == GetMilitaryBranchKey(faction.Slug, MilitaryUnitBranch.Navy) ? "is-open" : null)">
+                                                <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-military-units">
+                                                    <NavLink class="nav-link nav-flyout-link nav-military-unit-link" href="@faction.NavyRoute" @onclick="CloseMobileNav">
+                                                        All Navy Units
+                                                    </NavLink>
+                                                    <div class="nav-flyout-divider" aria-hidden="true"></div>
+                                                    @foreach (var group in MilitaryUnitData.GetNavyUnits(faction.Slug).GroupBy(unit => unit.NavyClass ?? unit.UnitType).OrderBy(group => group.Key))
+                                                    {
+                                                        <div class="nav-flyout-divider nav-flyout-divider-label" aria-hidden="true">@group.Key</div>
+                                                        @foreach (var unit in group)
+                                                        {
+                                                            <NavLink class="nav-link nav-flyout-link nav-military-unit-link" href="@unit.Route" @onclick="CloseMobileNav">
+                                                                <span class="nav-military-unit-dot" style="background-color: @unit.Color" aria-hidden="true"></span>
+                                                                @unit.Name
+                                                            </NavLink>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobilePlanets">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsPlanetDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobilePlanets">
+                    <span class="bi bi-planets-directory-nav-menu" aria-hidden="true"></span> Planets Directory
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobilePlanetsOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-planets">
+                        <NavLink class="nav-link nav-flyout-link nav-planet-link nav-all-planets-link" href="all-planets" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-planets-nav-menu" aria-hidden="true"></span>
+                            All Planets
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var planet in GalaxyData.Planets.OrderBy(planet => planet.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-planet-link" href="@planet.Route" @onclick="CloseMobileNav">
+                                <span class="nav-planet-dot" style="background-color: @planet.Color" aria-hidden="true"></span>
+                                @planet.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileShips">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsShipDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobileShips">
+                    <span class="bi bi-ships-directory-nav-menu" aria-hidden="true"></span> Ships Directory
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileShipsOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-wide nav-flyout-panel-ships">
+                        <NavLink class="nav-link nav-flyout-link nav-ship-link nav-all-ships-link" href="all-ships" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-ships-nav-menu" aria-hidden="true"></span>
+                            All Ships
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var ship in ShipData.Ships.OrderBy(ship => ship.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-ship-link" href="@ship.Route" @onclick="CloseMobileNav">
+                                <span class="nav-ship-dot" style="background-color: @ship.Color" aria-hidden="true"></span>
+                                @ship.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileSpecies">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsSpeciesDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobileSpecies">
+                    <span class="bi bi-species-directory-nav-menu" aria-hidden="true"></span> Species Directory
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileSpeciesOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-wide">
+                        <NavLink class="nav-link nav-flyout-link nav-species-link nav-all-species-link" href="all-species" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-species-nav-menu" aria-hidden="true"></span>
+                            All Species
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var species in SpeciesData.SpeciesList.OrderBy(species => species.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-species-link" href="@species.Route" @onclick="CloseMobileNav">
+                                <span class="nav-species-dot" style="background-color: @species.Color" aria-hidden="true"></span>
+                                @species.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileSettlements">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsSettlementDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobileSettlements">
+                    <span class="bi bi-settlements-directory-nav-menu" aria-hidden="true"></span> Cities &amp; Settlements
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileSettlementsOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-wide">
+                        <NavLink class="nav-link nav-flyout-link nav-settlement-link nav-all-settlements-link" href="all-cities-settlements" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-settlements-nav-menu" aria-hidden="true"></span>
+                            All Cities &amp; Settlements
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var settlement in SettlementData.Settlements.OrderBy(settlement => settlement.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-settlement-link" href="@settlement.Route" @onclick="CloseMobileNav">
+                                <span class="nav-settlement-dot" style="background-color: @settlement.Color" aria-hidden="true"></span>
+                                @settlement.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileDroids">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsDroidDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobileDroids">
+                    <span class="bi bi-droids-directory-nav-menu" aria-hidden="true"></span> Droid Directory
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileDroidsOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-wide nav-flyout-panel-droids">
+                        <NavLink class="nav-link nav-flyout-link nav-droid-link nav-all-droids-link" href="all-droids" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-droids-nav-menu" aria-hidden="true"></span>
+                            All Droids
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var droid in DroidData.Droids.OrderBy(droid => droid.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-droid-link" href="@droid.Route" @onclick="CloseMobileNav">
+                                <span class="nav-droid-dot" style="background-color: @droid.Color" aria-hidden="true"></span>
+                                @droid.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout nav-flyout-bottom"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileBountyHunters">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsBountyHunterDirectoryRoute ? "active" : null)"
+                        @onclick="ToggleMobileBountyHunters">
+                    <span class="bi bi-bounty-hunters-directory-nav-menu" aria-hidden="true"></span> Bounty Hunters Directory
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileBountyHuntersOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-scroll nav-flyout-panel-wide nav-flyout-panel-bounty-hunters">
+                        <NavLink class="nav-link nav-flyout-link nav-bounty-hunter-link nav-all-bounty-hunters-link" href="all-bounty-hunters" @onclick="CloseMobileNav">
+                            <span class="bi bi-all-bounty-hunters-nav-menu" aria-hidden="true"></span>
+                            All Bounty Hunters
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var hunter in BountyHunterData.BountyHunters.OrderBy(hunter => hunter.Name))
+                        {
+                            <NavLink class="nav-link nav-flyout-link nav-bounty-hunter-link" href="@hunter.Route" @onclick="CloseMobileNav">
+                                <span class="nav-bounty-hunter-dot" style="background-color: @hunter.Color" aria-hidden="true"></span>
+                                @hunter.Name
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout nav-flyout-bottom"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileTheForce">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsTheForceRoute ? "active" : null)"
+                        @onclick="ToggleMobileTheForce">
+                    <span class="bi bi-the-force-nav-menu" aria-hidden="true"></span> The Force
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileTheForceOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-the-force">
+                        <div class="nav-subflyout"
+                             @onclick:stopPropagation="true"
+                             @onmouseleave="CloseMobileForcePowersSub">
+                            <button type="button"
+                                    class="nav-link nav-flyout-trigger nav-flyout-link nav-subflyout-trigger @(IsForcePowersSubRoute ? "active" : null)"
+                                    @onclick="ToggleMobileForcePowersSub">
+                                <span class="bi bi-force-powers-nav-menu" aria-hidden="true"></span>
+                                Force Powers
+                                <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                            </button>
+                            <div class="nav-subflyout-menu @(mobileForcePowersSubOpen ? "is-open" : null)">
+                                <div class="nav-flyout-panel">
+                                    <NavLink class="nav-link nav-flyout-link nav-force-power-link nav-all-force-powers-link" href="all-force-powers" @onclick="CloseMobileNav">
+                                        <span class="bi bi-all-force-powers-nav-menu" aria-hidden="true"></span>
+                                        All Force Powers
+                                    </NavLink>
+                                    <div class="nav-subflyout"
+                                         @onclick:stopPropagation="true"
+                                         @onmouseleave="CloseMobileLightSide">
+                                        <button type="button"
+                                                class="nav-link nav-flyout-trigger nav-flyout-link nav-subflyout-trigger @(IsLightSideForceRoute ? "active" : null)"
+                                                @onclick="ToggleMobileLightSide">
+                                            <span class="bi bi-light-side-powers-nav-menu" aria-hidden="true"></span>
+                                            Light Side Powers
+                                            <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                                        </button>
+                                        <div class="nav-subflyout-menu @(mobileLightSideOpen ? "is-open" : null)">
+                                            <div class="nav-flyout-panel nav-flyout-panel-scroll">
+                                                <NavLink class="nav-link nav-flyout-link nav-force-power-link nav-all-light-side-link" href="all-light-side-powers" @onclick="CloseMobileNav">
+                                                    <span class="bi bi-all-light-side-nav-menu" aria-hidden="true"></span>
+                                                    All Light Side Powers
+                                                </NavLink>
+                                                <div class="nav-flyout-divider" aria-hidden="true"></div>
+                                                @foreach (var power in ForcePowerData.LightSidePowers.OrderBy(power => power.Name))
+                                                {
+                                                    <NavLink class="nav-link nav-flyout-link nav-force-power-link nav-light-side-link" href="@power.Route" @onclick="CloseMobileNav">
+                                                        <span class="nav-force-power-dot" style="background-color: @power.Color" aria-hidden="true"></span>
+                                                        @power.Name
+                                                    </NavLink>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="nav-subflyout"
+                                         @onclick:stopPropagation="true"
+                                         @onmouseleave="CloseMobileDarkSide">
+                                        <button type="button"
+                                                class="nav-link nav-flyout-trigger nav-flyout-link nav-subflyout-trigger @(IsDarkSideForceRoute ? "active" : null)"
+                                                @onclick="ToggleMobileDarkSide">
+                                            <span class="bi bi-dark-side-powers-nav-menu" aria-hidden="true"></span>
+                                            Dark Side Powers
+                                            <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                                        </button>
+                                        <div class="nav-subflyout-menu @(mobileDarkSideOpen ? "is-open" : null)">
+                                            <div class="nav-flyout-panel nav-flyout-panel-scroll">
+                                                <NavLink class="nav-link nav-flyout-link nav-force-power-link nav-all-dark-side-link" href="all-dark-side-powers" @onclick="CloseMobileNav">
+                                                    <span class="bi bi-all-dark-side-nav-menu" aria-hidden="true"></span>
+                                                    All Dark Side Powers
+                                                </NavLink>
+                                                <div class="nav-flyout-divider" aria-hidden="true"></div>
+                                                @foreach (var power in ForcePowerData.DarkSidePowers.OrderBy(power => power.Name))
+                                                {
+                                                    <NavLink class="nav-link nav-flyout-link nav-force-power-link nav-dark-side-link" href="@power.Route" @onclick="CloseMobileNav">
+                                                        <span class="nav-force-power-dot" style="background-color: @power.Color" aria-hidden="true"></span>
+                                                        @power.Name
+                                                    </NavLink>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <NavLink class="nav-link nav-flyout-link nav-the-force-link nav-light-dark-conflict-link" href="@TheForceTopicData.ConflictBetweenLightAndDark.Route" @onclick="CloseMobileNav">
+                            <span class="nav-the-force-dot" style="background-color: @TheForceTopicData.ConflictBetweenLightAndDark.Color" aria-hidden="true"></span>
+                            @TheForceTopicData.ConflictBetweenLightAndDark.Name
+                        </NavLink>
+                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                        @foreach (var topic in TheForceTopicData.Topics)
+                        {
+                            if (topic.Slug == "lightsaber-forms")
+                            {
+                                <div class="nav-subflyout"
+                                     @onclick:stopPropagation="true"
+                                     @onmouseleave="CloseMobileLightsaberForms">
+                                    <button type="button"
+                                            class="nav-link nav-flyout-trigger nav-flyout-link nav-subflyout-trigger @(IsLightsaberFormRoute ? "active" : null)"
+                                            @onclick="ToggleMobileLightsaberForms">
+                                        <span class="nav-the-force-dot" style="background-color: @topic.Color" aria-hidden="true"></span>
+                                        @topic.Name
+                                        <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                                    </button>
+                                    <div class="nav-subflyout-menu @(mobileLightsaberFormsOpen ? "is-open" : null)">
+                                        <div class="nav-flyout-panel nav-flyout-panel-scroll">
+                                            <NavLink class="nav-link nav-flyout-link nav-the-force-link" href="@topic.Route" @onclick="CloseMobileNav">
+                                                All Lightsaber Forms
+                                            </NavLink>
+                                            <div class="nav-flyout-divider" aria-hidden="true"></div>
+                                            @foreach (var form in LightsaberFormData.Forms.OrderBy(form => form.Name))
+                                            {
+                                                <NavLink class="nav-link nav-flyout-link nav-the-force-link" href="@form.Route" @onclick="CloseMobileNav">
+                                                    <span class="nav-the-force-dot" style="background-color: @form.Color" aria-hidden="true"></span>
+                                                    @form.Name
+                                                </NavLink>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <NavLink class="nav-link nav-flyout-link nav-the-force-link" href="@topic.Route" @onclick="CloseMobileNav">
+                                    <span class="nav-the-force-dot" style="background-color: @topic.Color" aria-hidden="true"></span>
+                                    @topic.Name
+                                </NavLink>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="nav-item px-3 nav-flyout nav-flyout-bottom"
+                 @onclick:stopPropagation="true"
+                 @onmouseleave="CloseMobileWarsConflicts">
+                <button type="button"
+                        class="nav-link nav-flyout-trigger @(IsWarsConflictsRoute ? "active" : null)"
+                        @onclick="ToggleMobileWarsConflicts">
+                    <span class="bi bi-wars-conflicts-nav-menu" aria-hidden="true"></span> Wars &amp; Conflicts
+                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-flyout-menu @(mobileWarsConflictsOpen ? "is-open" : null)">
+                    <div class="nav-flyout-panel nav-flyout-panel-wide">
+                        @foreach (var conflict in WarConflictData.Conflicts)
+                        {
+                            <div class="nav-subflyout"
+                                 @onclick:stopPropagation="true"
+                                 @onmouseleave="() => CloseWarConflict(conflict.Slug)">
+                                <button type="button"
+                                        class="nav-link nav-flyout-trigger nav-flyout-link nav-subflyout-trigger @(IsWarConflictRoute(conflict.Slug) ? "active" : null)"
+                                        @onclick="() => ToggleWarConflict(conflict.Slug)">
+                                    <span class="nav-war-conflict-dot" style="background-color: @conflict.Color" aria-hidden="true"></span>
+                                    @conflict.Name
+                                    <span class="nav-flyout-chevron" aria-hidden="true"></span>
+                                </button>
+                                <div class="nav-subflyout-menu @(openWarSlug == conflict.Slug ? "is-open" : null)">
+                                    <div class="nav-flyout-panel nav-flyout-panel-scroll">
+                                        <NavLink class="nav-link nav-flyout-link nav-war-conflict-link" href="@conflict.Route" @onclick="CloseMobileNav">
+                                            All Battles
+                                        </NavLink>
+                                        <div class="nav-flyout-divider" aria-hidden="true"></div>
+                                        @foreach (var battle in BattleData.GetByWar(conflict.Slug))
+                                        {
+                                            <NavLink class="nav-link nav-flyout-link nav-war-conflict-link" href="@battle.Route" @onclick="CloseMobileNav">
+                                                <span class="nav-war-conflict-dot" style="background-color: @battle.Color" aria-hidden="true"></span>
+                                                @battle.Name
+                                            </NavLink>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private bool mobileTimelinesOpen;
+    private bool mobileChroniclesOpen;
+    private bool mobileFactionsOpen;
+    private bool mobileWarsConflictsOpen;
+    private bool mobileCharactersOpen;
+    private bool mobileJediOpen;
+    private bool mobileSithOpen;
+    private bool mobileMilitaryUnitsOpen;
+    private bool mobilePlanetsOpen;
+    private bool mobileShipsOpen;
+    private bool mobileSpeciesOpen;
+    private bool mobileSettlementsOpen;
+    private bool mobileDroidsOpen;
+    private bool mobileBountyHuntersOpen;
+    private bool mobileForcePowersSubOpen;
+    private bool mobileTheForceOpen;
+    private bool mobileLightSideOpen;
+    private bool mobileDarkSideOpen;
+    private bool mobileLightsaberFormsOpen;
+    private string? openMilitaryFactionSlug;
+    private string? openMilitaryBranchKey;
+    private string? openWarSlug;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("starWarsNav.init");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("starWarsNav.dispose");
+        }
+        catch
+        {
+            // Ignore disconnect errors during teardown.
+        }
+    }
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private bool IsTimelineRoute =>
+        Navigation.Uri.Contains("/timelines", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsChroniclesRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri.Equals(ChroniclesData.GalacticHistoryRoute, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith("chronicles/galactic-history/", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return uri.Equals("chronicles", StringComparison.OrdinalIgnoreCase) ||
+                ChroniclesData.Entries.Any(entry =>
+                uri.Equals(entry.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{entry.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsFactionRoute =>
+        Navigation.Uri.Contains("/factions/", StringComparison.OrdinalIgnoreCase) ||
+        Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').Equals("all-factions", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsWarsConflictsRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri.StartsWith("wars-conflicts/battles/", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return WarConflictData.Conflicts.Any(conflict =>
+                uri.Equals(conflict.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{conflict.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsWarConflictRoute(string slug)
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+        var conflict = WarConflictData.Conflicts.FirstOrDefault(entry => entry.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase));
+        if (conflict is null)
+        {
+            return false;
+        }
+
+        return uri.Equals(conflict.Route, StringComparison.OrdinalIgnoreCase)
+            || uri.StartsWith($"{conflict.Route}/", StringComparison.OrdinalIgnoreCase)
+            || BattleData.GetByWar(conflict.Slug).Any(battle =>
+                uri.Equals(battle.Route, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool IsCharacterDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-characters")
+            {
+                return true;
+            }
+
+            return CharacterData.Characters.Any(character =>
+                uri.Equals(character.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{character.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsJediDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-jedi")
+            {
+                return true;
+            }
+
+            return JediData.Members.Any(jedi =>
+                uri.Equals(jedi.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{jedi.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsSithDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-sith")
+            {
+                return true;
+            }
+
+            return SithData.Members.Any(sith =>
+                uri.Equals(sith.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{sith.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsMilitaryUnitsRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri.Equals("all-military-units", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return MilitaryUnitData.Factions.Any(faction =>
+                uri.Equals(faction.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{faction.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsMilitaryFactionRoute(string slug)
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+        var faction = MilitaryUnitData.GetFactionBySlug(slug);
+        if (faction is null)
+        {
+            return false;
+        }
+
+        return uri.Equals(faction.Route, StringComparison.OrdinalIgnoreCase)
+            || uri.StartsWith($"{faction.Route}/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsLightsaberFormRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri.Equals("the-force/lightsaber-forms", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return LightsaberFormData.Forms.Any(form =>
+                uri.Equals(form.Route, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsPlanetDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-planets")
+            {
+                return true;
+            }
+
+            return GalaxyData.Planets.Any(planet =>
+                uri.Equals(planet.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{planet.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsShipDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-ships")
+            {
+                return true;
+            }
+
+            return ShipData.Ships.Any(ship =>
+                uri.Equals(ship.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{ship.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsSpeciesDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-species")
+            {
+                return true;
+            }
+
+            return SpeciesData.SpeciesList.Any(species =>
+                uri.Equals(species.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{species.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsSettlementDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-cities-settlements")
+            {
+                return true;
+            }
+
+            return SettlementData.Settlements.Any(settlement =>
+                uri.Equals(settlement.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{settlement.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsDroidDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-droids")
+            {
+                return true;
+            }
+
+            return DroidData.Droids.Any(droid =>
+                uri.Equals(droid.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{droid.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsBountyHunterDirectoryRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-bounty-hunters")
+            {
+                return true;
+            }
+
+            return BountyHunterData.BountyHunters.Any(hunter =>
+                uri.Equals(hunter.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{hunter.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsTheForceRoute => IsForcePowersSubRoute || IsTheForceTopicRoute;
+
+    private bool IsTheForceTopicRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+            var conflict = TheForceTopicData.ConflictBetweenLightAndDark.Route;
+
+            if (uri.Equals(conflict, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{conflict}/", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return TheForceTopicData.Topics.Any(topic =>
+                uri.Equals(topic.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{topic.Route}/", StringComparison.OrdinalIgnoreCase))
+                || IsLightsaberFormRoute;
+        }
+    }
+
+    private bool IsForcePowersSubRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-force-powers" or "all-light-side-powers" or "all-dark-side-powers")
+            {
+                return true;
+            }
+
+            return ForcePowerData.Powers.Any(power =>
+                uri.Equals(power.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{power.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsForcePowerRoute => IsForcePowersSubRoute;
+
+    private bool IsLightSideForceRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-light-side-powers")
+            {
+                return true;
+            }
+
+            return ForcePowerData.LightSidePowers.Any(power =>
+                uri.Equals(power.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{power.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private bool IsDarkSideForceRoute
+    {
+        get
+        {
+            var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+
+            if (uri is "all-dark-side-powers")
+            {
+                return true;
+            }
+
+            return ForcePowerData.DarkSidePowers.Any(power =>
+                uri.Equals(power.Route, StringComparison.OrdinalIgnoreCase) ||
+                uri.StartsWith($"{power.Route}/", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void ToggleMobileTimelines()
+    {
+        mobileTimelinesOpen = !mobileTimelinesOpen;
+        if (mobileTimelinesOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileTimelinesOpen));
+        }
+    }
+
+    private void ToggleMobileChronicles()
+    {
+        mobileChroniclesOpen = !mobileChroniclesOpen;
+        if (mobileChroniclesOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileChroniclesOpen));
+        }
+    }
+
+    private void ToggleMobileFactions()
+    {
+        mobileFactionsOpen = !mobileFactionsOpen;
+        if (mobileFactionsOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileFactionsOpen));
+        }
+    }
+
+    private void ToggleMobileWarsConflicts()
+    {
+        mobileWarsConflictsOpen = !mobileWarsConflictsOpen;
+        if (mobileWarsConflictsOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileWarsConflictsOpen));
+        }
+    }
+
+    private void ToggleMobileCharacters()
+    {
+        mobileCharactersOpen = !mobileCharactersOpen;
+        if (mobileCharactersOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileCharactersOpen));
+        }
+    }
+
+    private void ToggleMobileJedi()
+    {
+        mobileJediOpen = !mobileJediOpen;
+        if (mobileJediOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileJediOpen));
+        }
+    }
+
+    private void ToggleMobileSith()
+    {
+        mobileSithOpen = !mobileSithOpen;
+        if (mobileSithOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileSithOpen));
+        }
+    }
+
+    private void ToggleMobileMilitaryUnits()
+    {
+        mobileMilitaryUnitsOpen = !mobileMilitaryUnitsOpen;
+        if (mobileMilitaryUnitsOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileMilitaryUnitsOpen));
+        }
+    }
+
+    private void ToggleMobilePlanets()
+    {
+        mobilePlanetsOpen = !mobilePlanetsOpen;
+        if (mobilePlanetsOpen)
+        {
+            CloseOtherFlyouts(nameof(mobilePlanetsOpen));
+        }
+    }
+
+    private void ToggleMobileShips()
+    {
+        mobileShipsOpen = !mobileShipsOpen;
+        if (mobileShipsOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileShipsOpen));
+        }
+    }
+
+    private void ToggleMobileSpecies()
+    {
+        mobileSpeciesOpen = !mobileSpeciesOpen;
+        if (mobileSpeciesOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileSpeciesOpen));
+        }
+    }
+
+    private void ToggleMobileSettlements()
+    {
+        mobileSettlementsOpen = !mobileSettlementsOpen;
+        if (mobileSettlementsOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileSettlementsOpen));
+        }
+    }
+
+    private void ToggleMobileDroids()
+    {
+        mobileDroidsOpen = !mobileDroidsOpen;
+        if (mobileDroidsOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileDroidsOpen));
+        }
+    }
+
+    private void ToggleMobileBountyHunters()
+    {
+        mobileBountyHuntersOpen = !mobileBountyHuntersOpen;
+        if (mobileBountyHuntersOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileBountyHuntersOpen));
+        }
+    }
+
+    private void ToggleMobileTheForce()
+    {
+        mobileTheForceOpen = !mobileTheForceOpen;
+        if (mobileTheForceOpen)
+        {
+            CloseOtherFlyouts(nameof(mobileTheForceOpen));
+        }
+        else
+        {
+            mobileForcePowersSubOpen = false;
+            mobileLightSideOpen = false;
+            mobileDarkSideOpen = false;
+            mobileLightsaberFormsOpen = false;
+        }
+    }
+
+    private void ToggleMobileLightsaberForms()
+    {
+        mobileLightsaberFormsOpen = !mobileLightsaberFormsOpen;
+    }
+
+    private void CloseMobileLightsaberForms()
+    {
+        mobileLightsaberFormsOpen = false;
+    }
+
+    private void ToggleMilitaryFaction(string slug)
+    {
+        openMilitaryFactionSlug = openMilitaryFactionSlug == slug ? null : slug;
+        if (openMilitaryFactionSlug != slug)
+        {
+            openMilitaryBranchKey = null;
+        }
+    }
+
+    private void ToggleMilitaryBranch(string factionSlug, MilitaryUnitBranch branch)
+    {
+        var key = GetMilitaryBranchKey(factionSlug, branch);
+        openMilitaryBranchKey = openMilitaryBranchKey == key ? null : key;
+        openMilitaryFactionSlug = factionSlug;
+    }
+
+    private void CloseMilitaryBranch(string factionSlug, MilitaryUnitBranch branch)
+    {
+        var key = GetMilitaryBranchKey(factionSlug, branch);
+        if (openMilitaryBranchKey == key)
+        {
+            openMilitaryBranchKey = null;
+        }
+    }
+
+    private static string GetMilitaryBranchKey(string factionSlug, MilitaryUnitBranch branch) =>
+        $"{factionSlug}-{branch.ToString().ToLowerInvariant()}";
+
+    private bool IsMilitaryBranchRoute(string factionSlug, MilitaryUnitBranch branch)
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/').ToLowerInvariant();
+        var prefix = $"military-units/{factionSlug}/{branch.ToString().ToLowerInvariant()}";
+        return uri.Equals(prefix, StringComparison.OrdinalIgnoreCase)
+            || uri.StartsWith($"{prefix}/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void CloseMilitaryFaction(string slug)
+    {
+        if (openMilitaryFactionSlug == slug)
+        {
+            openMilitaryFactionSlug = null;
+        }
+    }
+
+    private void ToggleWarConflict(string slug)
+    {
+        openWarSlug = openWarSlug == slug ? null : slug;
+    }
+
+    private void CloseWarConflict(string slug)
+    {
+        if (openWarSlug == slug)
+        {
+            openWarSlug = null;
+        }
+    }
+
+    private void ToggleMobileForcePowersSub()
+    {
+        mobileForcePowersSubOpen = !mobileForcePowersSubOpen;
+        if (mobileForcePowersSubOpen)
+        {
+            mobileLightSideOpen = false;
+            mobileDarkSideOpen = false;
+        }
+    }
+
+    private void ToggleMobileLightSide()
+    {
+        mobileLightSideOpen = !mobileLightSideOpen;
+        if (mobileLightSideOpen)
+        {
+            mobileDarkSideOpen = false;
+        }
+    }
+
+    private void ToggleMobileDarkSide()
+    {
+        mobileDarkSideOpen = !mobileDarkSideOpen;
+        if (mobileDarkSideOpen)
+        {
+            mobileLightSideOpen = false;
+        }
+    }
+
+    private void CloseOtherFlyouts(string except)
+    {
+        if (except != nameof(mobileTimelinesOpen))
+        {
+            mobileTimelinesOpen = false;
+        }
+
+        if (except != nameof(mobileChroniclesOpen))
+        {
+            mobileChroniclesOpen = false;
+        }
+
+        if (except != nameof(mobileFactionsOpen))
+        {
+            mobileFactionsOpen = false;
+        }
+
+        if (except != nameof(mobileWarsConflictsOpen))
+        {
+            mobileWarsConflictsOpen = false;
+        }
+
+        if (except != nameof(mobileCharactersOpen))
+        {
+            mobileCharactersOpen = false;
+        }
+
+        if (except != nameof(mobileJediOpen))
+        {
+            mobileJediOpen = false;
+        }
+
+        if (except != nameof(mobileSithOpen))
+        {
+            mobileSithOpen = false;
+        }
+
+        if (except != nameof(mobileMilitaryUnitsOpen))
+        {
+            mobileMilitaryUnitsOpen = false;
+        }
+
+        if (except != nameof(mobilePlanetsOpen))
+        {
+            mobilePlanetsOpen = false;
+        }
+
+        if (except != nameof(mobileShipsOpen))
+        {
+            mobileShipsOpen = false;
+        }
+
+        if (except != nameof(mobileSpeciesOpen))
+        {
+            mobileSpeciesOpen = false;
+        }
+
+        if (except != nameof(mobileSettlementsOpen))
+        {
+            mobileSettlementsOpen = false;
+        }
+
+        if (except != nameof(mobileDroidsOpen))
+        {
+            mobileDroidsOpen = false;
+        }
+
+        if (except != nameof(mobileBountyHuntersOpen))
+        {
+            mobileBountyHuntersOpen = false;
+        }
+
+        if (except != nameof(mobileTheForceOpen))
+        {
+            mobileTheForceOpen = false;
+        }
+
+        if (except != nameof(mobileForcePowersSubOpen))
+        {
+            mobileForcePowersSubOpen = false;
+        }
+    }
+
+    private void CloseMobileTimelines()
+    {
+        mobileTimelinesOpen = false;
+    }
+
+    private void CloseMobileChronicles()
+    {
+        mobileChroniclesOpen = false;
+    }
+
+    private void CloseMobileFactions()
+    {
+        mobileFactionsOpen = false;
+    }
+
+    private void CloseMobileWarsConflicts()
+    {
+        mobileWarsConflictsOpen = false;
+        openWarSlug = null;
+    }
+
+    private void CloseMobileCharacters()
+    {
+        mobileCharactersOpen = false;
+    }
+
+    private void CloseMobileJedi()
+    {
+        mobileJediOpen = false;
+    }
+
+    private void CloseMobileSith()
+    {
+        mobileSithOpen = false;
+    }
+
+    private void CloseMobileMilitaryUnits()
+    {
+        mobileMilitaryUnitsOpen = false;
+        openMilitaryFactionSlug = null;
+        openMilitaryBranchKey = null;
+    }
+
+    private void CloseMobilePlanets()
+    {
+        mobilePlanetsOpen = false;
+    }
+
+    private void CloseMobileShips()
+    {
+        mobileShipsOpen = false;
+    }
+
+    private void CloseMobileSpecies()
+    {
+        mobileSpeciesOpen = false;
+    }
+
+    private void CloseMobileSettlements()
+    {
+        mobileSettlementsOpen = false;
+    }
+
+    private void CloseMobileDroids()
+    {
+        mobileDroidsOpen = false;
+    }
+
+    private void CloseMobileBountyHunters()
+    {
+        mobileBountyHuntersOpen = false;
+    }
+
+    private void CloseMobileTheForce()
+    {
+        mobileTheForceOpen = false;
+        mobileForcePowersSubOpen = false;
+        mobileLightSideOpen = false;
+        mobileDarkSideOpen = false;
+    }
+
+    private void CloseMobileForcePowersSub()
+    {
+        mobileForcePowersSubOpen = false;
+        mobileLightSideOpen = false;
+        mobileDarkSideOpen = false;
+    }
+
+    private void CloseMobileForcePowers()
+    {
+        CloseMobileTheForce();
+    }
+
+    private void CloseMobileLightSide()
+    {
+        mobileLightSideOpen = false;
+    }
+
+    private void CloseMobileDarkSide()
+    {
+        mobileDarkSideOpen = false;
+    }
+
+    private void CloseMobileNav()
+    {
+        collapseNavMenu = true;
+        mobileTimelinesOpen = false;
+        mobileChroniclesOpen = false;
+        mobileFactionsOpen = false;
+        mobileWarsConflictsOpen = false;
+        mobileCharactersOpen = false;
+        mobileJediOpen = false;
+        mobileSithOpen = false;
+        mobileMilitaryUnitsOpen = false;
+        mobilePlanetsOpen = false;
+        mobileShipsOpen = false;
+        mobileSpeciesOpen = false;
+        mobileSettlementsOpen = false;
+        mobileDroidsOpen = false;
+        mobileBountyHuntersOpen = false;
+        mobileTheForceOpen = false;
+        mobileForcePowersSubOpen = false;
+        mobileLightSideOpen = false;
+        mobileDarkSideOpen = false;
+    }
+}

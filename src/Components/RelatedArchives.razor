@@ -1,0 +1,17 @@
+@using StarWars.Models
+
+@if (Links.Count > 0)
+{
+    <EntityCrossLinks Links="@Links" Heading="@ArchiveHeading" Compact="@Compact" />
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<EntityCrossLink> Links { get; set; } = Array.Empty<EntityCrossLink>();
+
+    [Parameter]
+    public string ArchiveHeading { get; set; } = "Related Archives";
+
+    [Parameter]
+    public bool Compact { get; set; }
+}

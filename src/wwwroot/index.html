@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Star Wars</title>
+    <base href="/" />
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/webp" href="favicon.webp" />
+    <link href="Star-Wars.styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        window.starWarsMap = {
+            positionPanel(viewport, clientX, clientY, panelWidth, panelHeight) {
+                const rect = viewport.getBoundingClientRect();
+                const clickX = clientX - rect.left;
+                const clickY = clientY - rect.top;
+                const offset = 16;
+                let left = clickX + offset;
+                let top = clickY - panelHeight - offset;
+
+                if (top < 8) {
+                    top = clickY + offset;
+                }
+
+                if (left + panelWidth > rect.width - 8) {
+                    left = clickX - panelWidth - offset;
+                }
+
+                if (left < 8) {
+                    left = 8;
+                }
+
+                if (top + panelHeight > rect.height - 8) {
+                    top = Math.max(8, rect.height - panelHeight - 8);
+                }
+
+                return { left, top };
+            }
+        };
+
+        window.starWarsNav = {
+            _initialized: false,
+            _onMouseEnter: null,
+            _onMouseLeave: null,
+
+            init() {
+                if (this._initialized) {
+                    return;
+                }
+
+                this._onMouseEnter = (event) => {
+                    const bottomFlyout = event.target.closest('.nav-flyout-bottom');
+                    if (!bottomFlyout) {
+                        return;
+                    }
+
+                    const mainMenu = bottomFlyout.querySelector(':scope > .nav-flyout-menu');
+                    if (mainMenu && (event.target === bottomFlyout || mainMenu.contains(event.target) || bottomFlyout.querySelector('.nav-flyout-trigger')?.contains(event.target))) {
+                        this.adjustBottomFlyout(mainMenu);
+                    }
+
+                    const subflyout = event.target.closest('.nav-flyout-bottom .nav-subflyout');
+                    if (subflyout && bottomFlyout.contains(subflyout)) {
+                        this.adjustSubflyout(subflyout);
+                    }
+                };
+
+                this._onMouseLeave = (event) => {
+                    const subflyout = event.target.closest('.nav-flyout-bottom .nav-subflyout');
+                    if (subflyout && !subflyout.contains(event.relatedTarget)) {
+                        this.resetSubflyout(subflyout);
+                    }
+
+                    const bottomFlyout = event.target.closest('.nav-flyout-bottom');
+                    if (bottomFlyout && !bottomFlyout.contains(event.relatedTarget)) {
+                        const mainMenu = bottomFlyout.querySelector(':scope > .nav-flyout-menu');
+                        if (mainMenu) {
+                            this.resetBottomFlyout(mainMenu);
+                        }
+                    }
+                };
+
+                document.addEventListener('mouseover', this._onMouseEnter);
+                document.addEventListener('mouseout', this._onMouseLeave);
+                this._initialized = true;
+            },
+
+            dispose() {
+                if (!this._initialized) {
+                    return;
+                }
+
+                document.removeEventListener('mouseover', this._onMouseEnter);
+                document.removeEventListener('mouseout', this._onMouseLeave);
+                this._onMouseEnter = null;
+                this._onMouseLeave = null;
+                this._initialized = false;
+            },
+
+            adjustBottomFlyout(menuEl) {
+                if (!menuEl) {
+                    return;
+                }
+
+                const margin = 12;
+                menuEl.style.top = 'auto';
+                menuEl.style.bottom = '0';
+
+                const panel = menuEl.querySelector(':scope > .nav-flyout-panel');
+                if (!panel) {
+                    return;
+                }
+
+                panel.style.maxHeight = '';
+                panel.style.overflowY = '';
+                panel.scrollTop = 0;
+
+                if (panel.querySelector('.nav-subflyout')) {
+                    return;
+                }
+
+                const availableHeight = panel.getBoundingClientRect().bottom - margin;
+                panel.style.maxHeight = `${Math.max(240, Math.min(availableHeight, window.innerHeight * 0.7))}px`;
+                panel.style.overflowY = 'auto';
+                panel.scrollTop = 0;
+            },
+
+            resetBottomFlyout(menuEl) {
+                if (!menuEl) {
+                    return;
+                }
+
+                menuEl.style.top = '';
+                menuEl.style.bottom = '';
+
+                const panel = menuEl.querySelector(':scope > .nav-flyout-panel');
+                if (!panel) {
+                    return;
+                }
+
+                panel.style.maxHeight = '';
+                panel.style.overflowY = '';
+                panel.scrollTop = 0;
+            },
+
+            adjustSubflyout(subflyoutEl) {
+                const menuEl = subflyoutEl.querySelector(':scope > .nav-subflyout-menu');
+                if (!menuEl) {
+                    return;
+                }
+
+                const margin = 12;
+                menuEl.classList.add('nav-subflyout-menu-up');
+                menuEl.style.top = 'auto';
+                menuEl.style.bottom = '0';
+
+                const panel = menuEl.querySelector(':scope > .nav-flyout-panel');
+                if (panel) {
+                    panel.style.maxHeight = '';
+                    panel.style.overflowY = '';
+                    panel.scrollTop = 0;
+                }
+
+                const rect = menuEl.getBoundingClientRect();
+                if (rect.top < margin) {
+                    menuEl.classList.remove('nav-subflyout-menu-up');
+                    menuEl.style.top = '0';
+                    menuEl.style.bottom = 'auto';
+                }
+
+                if (!panel) {
+                    return;
+                }
+
+                if (panel.querySelector('.nav-subflyout')) {
+                    return;
+                }
+
+                const panelRect = panel.getBoundingClientRect();
+                const availableHeight = panelRect.bottom - margin;
+                panel.style.maxHeight = `${Math.max(200, Math.min(availableHeight, window.innerHeight * 0.65))}px`;
+                panel.style.overflowY = 'auto';
+                panel.scrollTop = 0;
+            },
+
+            resetSubflyout(subflyoutEl) {
+                const menuEl = subflyoutEl.querySelector(':scope > .nav-subflyout-menu');
+                if (!menuEl) {
+                    return;
+                }
+
+                menuEl.classList.remove('nav-subflyout-menu-up');
+                menuEl.style.top = '';
+                menuEl.style.bottom = '';
+
+                const panel = menuEl.querySelector(':scope > .nav-flyout-panel');
+                if (!panel) {
+                    return;
+                }
+
+                panel.style.maxHeight = '';
+                panel.style.overflowY = '';
+                panel.scrollTop = 0;
+            }
+        };
+    </script>
+</body>
+
+</html>

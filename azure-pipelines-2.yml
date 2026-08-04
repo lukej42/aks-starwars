@@ -1,0 +1,184 @@
+# Build Docker image, push to ACR, then deploy to AKS via Helm
+
+trigger: none
+
+pr:
+  branches:
+    include:
+      - feature
+      - test
+      - stage
+      - main
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '42182f6c-c90d-43a5-bd9a-498d8bf5994d'
+  imageRepository: 'lgexample654'
+  containerRegistry: 'lgexample654.azurecr.io'
+  dockerfilePath: '**/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+  # Shared AKS config
+  aksResourceGroup: 'terraform-prod'
+  helmChartPath: 'helm/starwars'
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+# ============================
+# DEPLOY STAGE: TEST
+# ============================
+- stage: DeployToAKS_Test
+  displayName: Deploy Helm to AKS (Test)
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/test'))
+  variables:
+  - group: vars-test
+  jobs:
+  - deployment: HelmDeploy
+    displayName: Helm deploy
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Test'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - task: AzureCLI@2
+            displayName: Deploy Helm Chart to AKS
+            inputs:
+              azureSubscription: 'Azure subscription 1(1)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -e
+                
+                echo "Getting AKS credentials for $(aksClusterName)..."
+                az aks get-credentials \
+                  --resource-group $(aksResourceGroup) \
+                  --name $(aksClusterName) \
+                  --overwrite-existing
+                
+                echo "Deploying Helm chart with Test values..."
+                helm upgrade --install $(helmReleaseName) \
+                  $(System.DefaultWorkingDirectory)/$(helmChartPath) \
+                  -f $(System.DefaultWorkingDirectory)/$(helmChartPath)/values-test.yaml \
+                  --set image.repository=$(containerRegistry)/$(imageRepository) \
+                  --set image.tag=$(tag) \
+                  --wait
+                
+                echo "Waiting for rollout..."
+                kubectl rollout status deployment/$(helmReleaseName)
+
+# ============================
+# DEPLOY STAGE: STAGE
+# ============================
+- stage: DeployToAKS_Stage
+  displayName: Deploy Helm to AKS (Stage)
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/stage'))
+  variables:
+  - group: vars-stage
+  jobs:
+  - deployment: HelmDeploy
+    displayName: Helm deploy
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Stage'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - task: AzureCLI@2
+            displayName: Deploy Helm Chart to AKS
+            inputs:
+              azureSubscription: 'Azure subscription 1(1)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -e
+                
+                echo "Getting AKS credentials for $(aksClusterName)..."
+                az aks get-credentials \
+                  --resource-group $(aksResourceGroup) \
+                  --name $(aksClusterName) \
+                  --overwrite-existing
+                
+                echo "Deploying Helm chart with Stage values..."
+                helm upgrade --install $(helmReleaseName) \
+                  $(System.DefaultWorkingDirectory)/$(helmChartPath) \
+                  -f $(System.DefaultWorkingDirectory)/$(helmChartPath)/values-stage.yaml \
+                  --set image.repository=$(containerRegistry)/$(imageRepository) \
+                  --set image.tag=$(tag) \
+                  --wait
+                
+                echo "Waiting for rollout..."
+                kubectl rollout status deployment/$(helmReleaseName)
+
+# ============================
+# DEPLOY STAGE: PRODUCTION
+# ============================
+- stage: DeployToAKS_Prod
+  displayName: Deploy Helm to AKS (Production)
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  variables:
+  - group: vars-prod
+  jobs:
+  - deployment: HelmDeploy
+    displayName: Helm deploy
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'Prod'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - task: AzureCLI@2
+            displayName: Deploy Helm Chart to AKS
+            inputs:
+              azureSubscription: 'Azure subscription 1(1)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -e
+                
+                echo "Getting AKS credentials for $(aksClusterName)..."
+                az aks get-credentials \
+                  --resource-group $(aksResourceGroup) \
+                  --name $(aksClusterName) \
+                  --overwrite-existing
+                
+                echo "Deploying Helm chart with Production values..."
+                helm upgrade --install $(helmReleaseName) \
+                  $(System.DefaultWorkingDirectory)/$(helmChartPath) \
+                  -f $(System.DefaultWorkingDirectory)/$(helmChartPath)/values-prod.yaml \
+                  --set image.repository=$(containerRegistry)/$(imageRepository) \
+                  --set image.tag=$(tag) \
+                  --wait
+                
+                echo "Waiting for rollout..."
+                kubectl rollout status deployment/$(helmReleaseName)

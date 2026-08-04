@@ -1,0 +1,422 @@
+<div class="directory-detail" style="--character-accent: @AccentColor">
+    <header class="directory-detail-hero @(ShowPortraitHero ? null : "directory-detail-hero-banner")">
+        @if (ShowPortraitHero)
+        {
+            <figure class="character-page-portrait-wrap directory-detail-portrait">
+                <img class="character-page-portrait"
+                     src="@ImageUrls.Resolve(HeroImagePath)"
+                     alt="@HeroImageAlt"
+                     loading="lazy" />
+            </figure>
+        }
+        else if (!string.IsNullOrWhiteSpace(HeroImagePath))
+        {
+            <div class="directory-detail-banner-stack">
+                <figure class="directory-hero directory-detail-banner">
+                    <img src="@ImageUrls.Resolve(HeroImagePath)" alt="@HeroImageAlt" loading="lazy" />
+                </figure>
+                @if (!string.IsNullOrWhiteSpace(LightsaberGlowPath))
+                {
+                    <div class="directory-detail-lightsaber" aria-hidden="true">
+                        <img src="@ImageUrls.Resolve(LightsaberGlowPath)" alt="" loading="lazy" />
+                    </div>
+                }
+            </div>
+        }
+        <div class="directory-detail-intro @(ShowPortraitHero ? null : "directory-detail-intro-full")">
+            <h1>@Name</h1>
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <p class="planet-region">@Subtitle</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(MetaLine))
+            {
+                <p class="directory-detail-meta-line">@MetaLine</p>
+            }
+            @if (Government is not null || HeadOfGovernment is not null || HeadOfState is not null || !string.IsNullOrWhiteSpace(NumberOfSystems) || HomePlanet is not null || Location is not null)
+            {
+                <dl class="directory-detail-governance">
+                    @if (HomePlanet is not null)
+                    {
+                        <div class="directory-detail-governance-row">
+                            <dt>Home planet</dt>
+                            <dd>@RenderGovernanceValue(HomePlanet)</dd>
+                        </div>
+                    }
+                    @if (Location is not null)
+                    {
+                        <div class="directory-detail-governance-row">
+                            <dt>Location</dt>
+                            <dd>@RenderGovernanceValue(Location)</dd>
+                        </div>
+                    }
+                    @if (Government is not null)
+                    {
+                        <div class="directory-detail-governance-row">
+                            <dt>Government</dt>
+                            <dd>@RenderGovernanceValue(Government)</dd>
+                        </div>
+                    }
+                    @if (HeadOfGovernment is not null)
+                    {
+                        <div class="directory-detail-governance-row">
+                            <dt>Head of Government</dt>
+                            <dd>@RenderGovernanceValue(HeadOfGovernment)</dd>
+                        </div>
+                    }
+                    @if (HeadOfState is not null)
+                    {
+                        <div class="directory-detail-governance-row">
+                            <dt>Head of State</dt>
+                            <dd>@RenderGovernanceValue(HeadOfState)</dd>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(NumberOfSystems))
+                    {
+                        <div class="directory-detail-governance-row">
+                            <dt>Number of Systems</dt>
+                            <dd>@NumberOfSystems</dd>
+                        </div>
+                    }
+                </dl>
+            }
+            @if (!string.IsNullOrWhiteSpace(Quote))
+            {
+                <blockquote class="directory-detail-quote">"@Quote"</blockquote>
+            }
+            @if (!string.IsNullOrWhiteSpace(OverviewText))
+            {
+                <div class="directory-detail-overview">
+                    <DirectoryRichText Text="@OverviewText" />
+                </div>
+            }
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(HistoryText))
+    {
+        <section class="directory-detail-section">
+            <h2>History</h2>
+            <DirectoryRichText Text="@HistoryText" />
+        </section>
+    }
+
+    @if (MajorEvents.Count > 0)
+    {
+        <section class="directory-detail-section">
+            <h2>Major events</h2>
+            <ul class="directory-detail-list directory-detail-linked-list">
+                @foreach (var item in MajorEvents)
+                {
+                    <li>
+                        @if (!string.IsNullOrWhiteSpace(item.Route))
+                        {
+                            <a href="@item.Route">@item.Text</a>
+                        }
+                        else
+                        {
+                            @item.Text
+                        }
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+    else if (NotableEvents.Count > 0)
+    {
+        <section class="directory-detail-section @(string.IsNullOrWhiteSpace(NotableEventsAsideImagePath) ? null : "directory-detail-section-with-aside")">
+            <h2>Notable events</h2>
+            @if (string.IsNullOrWhiteSpace(NotableEventsAsideImagePath))
+            {
+                <ul class="directory-detail-list">
+                    @foreach (var item in NotableEvents)
+                    {
+                        <li>@item</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="directory-detail-section-split">
+                    <ul class="directory-detail-list">
+                        @foreach (var item in NotableEvents)
+                        {
+                            <li>@item</li>
+                        }
+                    </ul>
+                    <figure class="directory-detail-section-aside">
+                        <img src="@ImageUrls.Resolve(NotableEventsAsideImagePath)"
+                             alt="@NotableEventsAsideImageAlt"
+                             loading="lazy" />
+                    </figure>
+                </div>
+            }
+        </section>
+    }
+
+    @if (KeyFactions.Count > 0)
+    {
+        <DirectoryLinkedList Heading="Key factions" Items="@KeyFactions" />
+    }
+
+    @if (MajorCharacters.Count > 0)
+    {
+        <DirectoryLinkedList Heading="Major characters" Items="@MajorCharacters" ItemsPerColumn="4" />
+    }
+
+    @if (Planets.Count > 0)
+    {
+        <DirectoryLinkedList Heading="Planets" Items="@Planets" ItemsPerColumn="4" />
+    }
+
+    @if (Films.Count > 0)
+    {
+        <section class="directory-detail-section">
+            <h2>Films</h2>
+            <ul class="directory-detail-list">
+                @foreach (var item in Films)
+                {
+                    <li>@item</li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (Series.Count > 0)
+    {
+        <section class="directory-detail-section">
+            <h2>Series</h2>
+            <ul class="directory-detail-list">
+                @foreach (var item in Series)
+                {
+                    <li>@item</li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (Games.Count > 0)
+    {
+        <section class="directory-detail-section">
+            <h2>Games</h2>
+            <ul class="directory-detail-list">
+                @foreach (var item in Games)
+                {
+                    <li>@item</li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (Books.Count > 0)
+    {
+        <section class="directory-detail-section">
+            <h2>Books</h2>
+            <ul class="directory-detail-list">
+                @foreach (var item in Books)
+                {
+                    <li>@item</li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (Ships.Count > 0)
+    {
+        <DirectoryLinkedList Heading="Ships" Items="@Ships" />
+    }
+
+    @if (!string.IsNullOrWhiteSpace(SignificanceText))
+    {
+        <section class="directory-detail-section">
+            <h2>@SignificanceHeading</h2>
+            <DirectoryRichText Text="@SignificanceText" />
+        </section>
+    }
+
+    @if (Affiliations.Count > 0)
+    {
+        <section class="directory-detail-section">
+            <h2>Affiliations</h2>
+            <div class="directory-detail-tags">
+                @foreach (var affiliation in Affiliations)
+                {
+                    <span class="directory-detail-tag">@affiliation</span>
+                }
+            </div>
+        </section>
+    }
+
+    @if (Timeline.Count > 0)
+    {
+        <section class="directory-detail-section">
+            <h2>Timeline</h2>
+            <ol class="directory-detail-timeline">
+                @foreach (var entry in Timeline)
+                {
+                    <li>
+                        <span class="directory-detail-era">@entry.Era</span>
+                        <span>@entry.Event</span>
+                    </li>
+                }
+            </ol>
+        </section>
+    }
+
+    @if (Gallery.Count > 0)
+    {
+        <section class="directory-detail-section">
+            <h2>Related images</h2>
+            <div class="directory-detail-gallery">
+                @foreach (var image in Gallery)
+                {
+                    <figure class="directory-detail-gallery-item">
+                        <img src="@ImageUrls.Resolve(image.Path)" alt="@image.Caption" loading="lazy" />
+                        <figcaption>@image.Caption</figcaption>
+                    </figure>
+                }
+            </div>
+        </section>
+    }
+
+    @if (ChildContent is not null)
+    {
+        <footer class="directory-detail-footer">
+            @ChildContent
+        </footer>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Name { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string HeroImagePath { get; set; } = string.Empty;
+
+    [Parameter]
+    public string HeroImageAlt { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Subtitle { get; set; } = string.Empty;
+
+    [Parameter]
+    public string MetaLine { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Quote { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string OverviewText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string HistoryText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string SignificanceText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string SignificanceHeading { get; set; } = "Legacy and significance";
+
+    [Parameter]
+    public IReadOnlyList<string> NotableEvents { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public string NotableEventsAsideImagePath { get; set; } = string.Empty;
+
+    [Parameter]
+    public string NotableEventsAsideImageAlt { get; set; } = string.Empty;
+
+    [Parameter]
+    public IReadOnlyList<ProfileLinkedEvent> MajorEvents { get; set; } = Array.Empty<ProfileLinkedEvent>();
+
+    [Parameter]
+    public IReadOnlyList<ProfileLinkItem> KeyFactions { get; set; } = Array.Empty<ProfileLinkItem>();
+
+    [Parameter]
+    public IReadOnlyList<ProfileLinkItem> MajorCharacters { get; set; } = Array.Empty<ProfileLinkItem>();
+
+    [Parameter]
+    public IReadOnlyList<ProfileLinkItem> Planets { get; set; } = Array.Empty<ProfileLinkItem>();
+
+    [Parameter]
+    public IReadOnlyList<ProfileLinkItem> Ships { get; set; } = Array.Empty<ProfileLinkItem>();
+
+    [Parameter]
+    public IReadOnlyList<string> Films { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public IReadOnlyList<string> Series { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public IReadOnlyList<string> Games { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public IReadOnlyList<string> Books { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public IReadOnlyList<string> Affiliations { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public IReadOnlyList<ProfileTimelineEntry> Timeline { get; set; } = Array.Empty<ProfileTimelineEntry>();
+
+    [Parameter]
+    public IReadOnlyList<ProfileImage> Gallery { get; set; } = Array.Empty<ProfileImage>();
+
+    [Parameter]
+    public ProfileLinkItem? HomePlanet { get; set; }
+
+    [Parameter]
+    public ProfileLinkItem? Location { get; set; }
+
+    [Parameter]
+    public string LightsaberGlowPath { get; set; } = string.Empty;
+
+    [Parameter]
+    public ProfileLinkItem? Government { get; set; }
+
+    [Parameter]
+    public ProfileLinkItem? HeadOfGovernment { get; set; }
+
+    [Parameter]
+    public ProfileLinkItem? HeadOfState { get; set; }
+
+    [Parameter]
+    public string NumberOfSystems { get; set; } = string.Empty;
+
+    [Parameter]
+    public string AccentColor { get; set; } = "#7eb8ff";
+
+    [Parameter]
+    public bool ShowPortraitHero { get; set; } = true;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private RenderFragment RenderGovernanceValue(ProfileLinkItem item) => builder =>
+    {
+        if (!string.IsNullOrWhiteSpace(item.Route))
+        {
+            builder.OpenElement(0, "a");
+            builder.AddAttribute(1, "href", item.Route);
+            builder.AddAttribute(2, "class", GovernanceLinkClass(item));
+            builder.AddContent(3, item.Value);
+            builder.CloseElement();
+            return;
+        }
+
+        builder.AddContent(4, item.Value);
+    };
+
+    private static string? GovernanceLinkClass(ProfileLinkItem item)
+    {
+        if (!item.Emphasized)
+        {
+            return null;
+        }
+
+        return item.EmphasisTone.Equals("jedi", StringComparison.OrdinalIgnoreCase)
+            ? "directory-detail-governance-emphasized-jedi"
+            : "directory-detail-governance-emphasized";
+    }
+}

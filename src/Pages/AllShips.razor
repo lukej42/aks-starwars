@@ -1,0 +1,43 @@
+@page "/all-ships"
+@using StarWars.Data
+
+<PageTitle>All Ships</PageTitle>
+
+<div class="directory-page">
+    <figure class="directory-hero">
+        <img src="@ImageUrls.Resolve("/images/ships/ships-directory-hero.webp")" alt="Starship silhouettes drifting through a luminous deep-space nebula" loading="lazy" />
+    </figure>
+
+    <h1>All Ships</h1>
+    <p class="all-planets-intro">@ShipData.Ships.Count starships and support craft from the saga films, series, Knights of the Old Republic, and the Sith Empire — fighters, freighters, capital ships, and battle stations.</p>
+
+    <DirectoryListSearch Placeholder="Search ships by name, class, or era…"
+                         ItemLabel="ships"
+                         TotalCount="@ShipData.Ships.Count"
+                         FilteredCount="@FilteredShips.Count"
+                         Query="@searchQuery"
+                         QueryChanged="OnSearchChanged" />
+
+    <div class="planet-directory-grid ship-directory-grid">
+        @foreach (var ship in FilteredShips.OrderBy(ship => ship.Name))
+        {
+            <article class="planet-directory-card ship-directory-card">
+                <span class="planet-directory-swatch" style="background-color: @ship.Color" aria-hidden="true"></span>
+                <div class="planet-directory-details">
+                    <a href="@ship.Route">@ship.Name</a>
+                    <p class="planet-region ship-directory-class">@ship.Class</p>
+                    <p class="planet-region ship-directory-era">@ship.Era</p>
+                </div>
+            </article>
+        }
+    </div>
+</div>
+
+@code {
+    private string searchQuery = string.Empty;
+
+    private IReadOnlyList<Ship> FilteredShips =>
+        ShipData.Ships.Where(ship => DirectoryFilter.Matches(searchQuery, ship.Name, ship.Class, ship.Era, ship.Description)).ToList();
+
+    private void OnSearchChanged(string query) => searchQuery = query;
+}

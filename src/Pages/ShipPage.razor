@@ -1,0 +1,69 @@
+@page "/ships/{Slug}"
+@using StarWars.Data
+@using StarWars.Models
+@using StarWars.Services
+@using StarWars.Components
+@inject DirectoryProfileService ProfileService
+@inject EntityCrossLinkService CrossLinkService
+@inject EntityLocationService LocationService
+
+<PageTitle>@(ship?.Name ?? "Ship")</PageTitle>
+
+@if (ship is null)
+{
+    <h1>Ship not found</h1>
+    <p>Sorry, there are no records for this vessel.</p>
+}
+else if (!profileLoaded)
+{
+    <p class="directory-detail-loading">Loading ship records…</p>
+}
+else
+{
+    <DirectoryDetailShell Name="@ship.Name"
+                          HeroImagePath="@ship.SceneImagePath"
+                          HeroImageAlt="@($"Cinematic illustration of the {ship.Name}")"
+                          ShowPortraitHero="false"
+                          Subtitle="@ship.Class"
+                          MetaLine="@($"Production: {ship.ProductionCount} · {ship.Era}")"
+                          HomePlanet="@homePlanet"
+                          OverviewText="@(profile?.Overview ?? ship.Description)"
+                          HistoryText="@(profile?.History ?? string.Empty)"
+                          SignificanceText="@(profile?.Significance ?? string.Empty)"
+                          SignificanceHeading="Design and service record"
+                          NotableEvents="@(profile?.NotableEvents ?? Array.Empty<string>())"
+                          Affiliations="@(profile?.Affiliations ?? Array.Empty<string>())"
+                          Timeline="@(profile?.Timeline ?? Array.Empty<ProfileTimelineEntry>())"
+                          Gallery="@(profile?.Gallery ?? Array.Empty<ProfileImage>())"
+                          AccentColor="@ship.Color" />
+    <EntityCrossLinks Links="@crossLinks" />
+}
+
+@code {
+    [Parameter]
+    public string Slug { get; set; } = string.Empty;
+
+    private Ship? ship;
+    private DirectoryProfile? profile;
+    private bool profileLoaded;
+    private ProfileLinkItem? homePlanet;
+    private IReadOnlyList<EntityCrossLink> crossLinks = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ship = ShipData.GetBySlug(Slug);
+        profileLoaded = false;
+        profile = null;
+        homePlanet = null;
+        crossLinks = [];
+
+        if (ship is not null)
+        {
+            profile = await ProfileService.GetProfileAsync("ships", ship.Slug);
+            crossLinks = await CrossLinkService.GetLinksAsync("ships", ship.Slug);
+            homePlanet = await LocationService.GetHomePlanetAsync("ships", ship.Slug);
+        }
+
+        profileLoaded = true;
+    }
+}

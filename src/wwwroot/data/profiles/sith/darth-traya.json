@@ -1,0 +1,37 @@
+{
+  "overview": "Darth Traya—Kreia, the former Jedi Master—was the hidden architect of the Sith Triumvirate who sought to destroy the Force itself after the Jedi and Sith both failed her. Her manipulation of Meetra Surik exposed the hypocrisy of both Orders on Telos, Malachor V, and Dantooine.",
+  "history": "Cast out by the Jedi and mutilated by the Sith, Kreia rejected binary dogma and trained Meetra Surik to see the galaxy without the Force's whisper. She engineered Darth Nihilus and Darth Sion's rise while posing as an ally aboard the Ebon Hawk.\n\nOn Malachor V, Traya revealed her plan to wound the Force through Surik's unique connection—the echo of the Mass Shadow Generator. Defeated by her former pupil, Traya's death closed one path to ending the Jedi–Sith cycle, yet her questions linger in every debate about the Council's role in galactic war.",
+  "significance": "Traya voices KOTOR II's central thesis: institutions that claim moral monopoly can cause as much harm as Sith empires.\n\nHer Triumvirate proves Sith can evolve beyond armies into metaphysical threats.\n\nJedi masters still cite Kreia's holocron fragments when discussing attachment and exile.",
+  "notableEvents": [
+    "Was exiled by the Jedi and betrayed by the Sith",
+    "Formed the Sith Triumvirate with Nihilus and Sion",
+    "Manipulated Meetra Surik across the Outer Rim",
+    "Revealed her plan to destroy the Force on Malachor V",
+    "Was defeated by the Jedi Exile"
+  ],
+  "affiliations": [
+    "Sith Triumvirate",
+    "Jedi Order (former)",
+    "Malachor V survivors"
+  ],
+  "timeline": [
+    {
+      "era": "Old Republic",
+      "event": "Fell from the Jedi Order after the Mandalorian Wars"
+    },
+    {
+      "era": "Old Republic",
+      "event": "Created the Sith Triumvirate"
+    },
+    {
+      "era": "Old Republic",
+      "event": "Was defeated at Malachor V by Meetra Surik"
+    }
+  ],
+  "gallery": [
+    {
+      "path": "/images/sith/darth-traya-scene.webp",
+      "caption": "Cinematic illustration — Darth Traya"
+    }
+  ]
+}

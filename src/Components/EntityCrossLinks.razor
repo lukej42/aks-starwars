@@ -1,0 +1,51 @@
+@if (Links.Count > 0)
+{
+    <div class="directory-detail entity-cross-links-wrap @(Compact ? "entity-cross-links-wrap-compact" : null)">
+        <section class="directory-detail-section entity-cross-links">
+            @if (!string.IsNullOrWhiteSpace(Heading))
+            {
+                <h2>@Heading</h2>
+            }
+            <ul class="entity-cross-links-list">
+                @foreach (var link in Links)
+                {
+                    <li>
+                        <a class="entity-cross-link-card" href="@link.Route">
+                            @if (!string.IsNullOrWhiteSpace(link.Image))
+                            {
+                                <figure class="entity-cross-link-thumb-wrap">
+                                    <img class="entity-cross-link-thumb"
+                                         src="@ImageUrls.Resolve(link.Image)"
+                                         alt=""
+                                         width="56"
+                                         height="74"
+                                         loading="lazy"
+                                         decoding="async" />
+                                </figure>
+                            }
+                            else
+                            {
+                                <span class="entity-cross-link-thumb-wrap entity-cross-link-thumb-fallback" aria-hidden="true"></span>
+                            }
+                            <span class="entity-cross-link-body">
+                                <span class="entity-cross-link-label">@link.Label</span>
+                                <span class="entity-cross-link-value">@link.Value</span>
+                            </span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<EntityCrossLink> Links { get; set; } = Array.Empty<EntityCrossLink>();
+
+    [Parameter]
+    public string Heading { get; set; } = "Related Archives";
+
+    [Parameter]
+    public bool Compact { get; set; }
+}
